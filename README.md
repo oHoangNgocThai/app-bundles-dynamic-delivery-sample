@@ -1,10 +1,6 @@
 # app-bundles-dynamic-delivery-sample
 
 
-
-# App Bundles
-
-
 # Dynamic Delivery
 
 ## Overview
@@ -13,7 +9,7 @@
 
 * Phần lớn các APK đã được tối ưu hóa khi sử dụng với Dynamic Delivery. Nếu bạn đã sắp xếp source code và các resource theo các quy định đã được thiết lập, chỉ cần build ứng dụng của bạn với App Bundle sử dụng Android Studio hoặc sử dụng command line và đẩy ứng dụng lên chợ Google Play.
 
-### Dynamic Delivery with split APKs
+#### Dynamic Delivery with split APKs
 
 * Thành phần cơ bản của Dynamic Delivery là cơ chế phân chia APK có sẵ trên Android 5.0 trở lên. Cơ chế này giống với các Apk thông thường bao gồm mã byte DEX được biên dịch, các resource của Android và tệp AndroidManifest.
 
@@ -41,7 +37,32 @@
 
 * Mỗi APK này chưa mã và tài nguyên của 1 tính năng trong ứng dụng mà bạn module nó, thông qua dynamic, sau đó bạn có thể tùy chỉnh cách thức và thời điểm tải về trên thiết bị. Ví dụ 1 số ứng dụng phải truy cập vào module mới yêu cầu tải thêm dữ liệu của phần đó về.
 
-<img src="image/apk_splits.png" height="250">
+<img src="image/apk_splits.png" height="350" width="500">
+
+#### Modularize your app
+
+* Module hóa hứng dụng của bạn là quá trình tách các thành phần login của dự án thành cách module riêng biệt.
+
+* Phát triển song song: bằng cách tách các thành phần login của ứng dụng của bạn thành cách module, các nhóm hoặc cá nhân khác nhau trong tổ chức có thể phát triển độc lập và không ảnh hưởng gì đến nhau.
+
+* Sẽ giúp cải thiện thời gian hoàn thành của ứng dụng của bạn.
+
+* Tùy chỉnh phân phối các tính năng: Là một cách tận dụng các tùy chọn của Dynamic Delivery một cách có yêu cầu, điều kiện và phân phối tức thì. Tạo các tính nắng động yêu cầu đồi hỏi nhiều nỗ lực hơn và có thể tái cấu trúc ứng dụng.
 
 
 
+## Configure the base module
+
+# App Bundles
+
+## Overview
+
+* Tại Google I/O 2018, một định dạng publish app mới đã được giới thiệu cho các app Android có tên là **Android App Bundle**. Đây là định sạng tải lên mới bao gồm tất cả các mã code và tài nguyên được biên dịch, nhưng trì hoãn việc tạo APK và signing vào Google Play. 
+
+* Tại sao lại sử dụng định dạng mới này?
+
+    * **Dynamic Delivery**: Mô hình phục vụ ứng dụng mới của Google Play được gọi là **Dynamic Delivery**, người dùng sử dụng app bundle để tạo và cung cấp APK được tối ưu hóa cho từng cấu hình thiết bị của người dùng. Vì vậy họ chỉ tải xuống code và tài nguyên họ cần để chạy ứng dụng của bạn.
+    
+    * **No need to manually manage multiple APKs**: Bạn không còn phải xây dựng, sign và quản lý nhiều APK để hỗ trợ các thiết bị khác nhau và người dùng có thể có được cá bản tải xuống nhỏ hơn, tối ưu hơn. Ví dụ bây giờ bạn không phải tạo nhiều APK cho các thiết bị có độ phân giải màn hình khác nhau.
+    
+    * **Dynamic Feature Module**: Các module 
