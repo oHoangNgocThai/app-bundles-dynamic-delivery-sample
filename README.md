@@ -24,54 +24,8 @@
     
     > App bundle sẽ được sinh ra ở thư mục: **app/build/outputs/bundle/buildVariant/bundle.aab**.
 
-## Deploy your app from an app bundle
-
-* Chọn **Run > Edit Configurations**. 
-
-* Chọn module bạn muốn trong phần **Android App**.
-
-* Trong dropdown của Deploy, lựa chọn **APK from app bundle**.
-
-* Trong phần **Dynamic features to deploy**, 
-
-
-# Dynamic Feature Modules
-
-## Dynamic Delivery
-
-* Thành phần cơ bản của Dynamic Delivery là cơ chế phân chia APK có sẵ trên Android 5.0 trở lên. Cơ chế này giống với các Apk thông thường bao gồm mã byte DEX được biên dịch, các resource của Android và tệp AndroidManifest.
-
-* Tuy vậy nền tảng Android có thể chia nhỏ nhiều apk để cài đặt như 1 ứng dụng. Nghĩa là bạn cso thể cài đặt nhiều APK phân chia có quyền truy cập vào mã và tài nguyên chung và xuất hiện dưới dạng 1 ứng dụng được cài đặt trên thiết bị.
-
-<img src="image/split_apk.png" height="260">
-
-### Dynamic Delivery with split APKs
-
-* **Base APK**: APK này chứa tất cả các mã và resource mà tất cả các split APK khác có thể truy cập và cung cấp chức năng cơ bản cho ứng dụng. Khi người dùng yêu cầu tải xuống ứng dụng của bạn, APK này sẽ được tải xuống và cài đặt trước. Điều đó bởi vì có tệp AndroidManifest của APK base khai báo đầy đủ các dịch vụ, ứng dụng cung cấp nội dung, quyền, yêu cầu về version và phụ thuộc vào các tính năng của hệ thống.
-
-
-* **Configuration APKs**: Mỗi APK này bao gồm các thư viện và tài nguyên riêng cho từng loại màn hình, kiến trúc CPU hoặc ngôn ngữ cụ thể. Khi người dùng tài xuống ứng dụng của bạn, họ sẽ chỉ tải APK nhắm mục tiêu vào thiết bị của họ. Mỗi APK cấu hình là một phụ thuộc của **Base APK** hoặc là **Dynamic feature APKs**, chúng được tải xuống và cài đặt cùng với APK mà chúng cung cấp source và tài nguyên cho. Không giống như base hoặc dynamic feature, bạn không tạo 1 module riêng cho configuration apk. Nếu bạn sử dụng tiêu chuẩn để sắp xếp các tài nguyên thay thế, dành riêng cho cấu hình các module dynamic feature hoặc là base apk, Google Play sẽ tự tạo Configuration APK.
-    <img src="image/configuration_apk.png" height="200">
-
-* **Dynamic feature APKs**: Mỗi APK này chưa mã và tài nguyên của 1 tính năng trong ứng dụng mà bạn module nó, thông qua dynamic, sau đó bạn có thể tùy chỉnh cách thức và thời điểm tải về trên thiết bị. Ví dụ 1 số ứng dụng phải truy cập vào module mới yêu cầu tải thêm dữ liệu của phần đó về.
-
-<img src="image/different_type_split_apk.png" height="350" width="500">
-
-> Đối với các device chạy Android 4.4 (API level 20) hoặc thấp hơn, Google Play tự động cung cấp 1 APK duy nhất mà tối ưu hóa cho cấu hình của thiết bị.
-
-## Dynamic Feature Modules
-
-* Cho phép bạn tách các tính năng và tài nguyên nhất định khỏi module base của ứng dụng và đưa chúng vào app bundle. Người dùng có thể tải xuống và cài đặt cá module này sau này theo yêu cầu sau khi họ đã cài đặt base apk bằng Dynamic Delivery.
-
-### Creating a dynamic feature module
-
-* Dynamic feature module được tổ chức giống như các module thông thường. Nó cũng cung cấp mã code, tài nguyên và tài sản của riêng họ trong các thư mục mà bạn mong đợi. Để thêm dynamic feature module vào ứng dụng của bạn bằng Android Studio(Canary 14+).
-> Lưu ý trước khi tạo dynamic feature module, bạn phải tạo app bundle của mình.
-
-
 
 ### Android App bundle (.aab)
-https://medium.com/mindorks/android-app-bundle-aab-98de6dad8ba8
 
 * Định dạng file mà khi sử dụng App Bundle trên Android Studio để triển khai APK tùy chỉnh cho người dùng sử dụng Dynamic Delivery của Google Play.
 
@@ -92,3 +46,106 @@ https://medium.com/mindorks/android-app-bundle-aab-98de6dad8ba8
     * **res, lib, and assets**: Các thư mục này sử dụng giống APK thông thường, ngoại trừ đối với App Bundle, chúng được Google Play sử dụng để chỉ gói các tệp thỏa mãn cấu hình thiết bị đích.
     
     * **root**: Các thư mục này lưu trữ các tệp mà sau đó được chuyển đến thư mục gốc của APK bao gồm module tương ứng.
+
+
+## Dynamic Delivery System
+
+* Thành phần cơ bản của Dynamic Delivery là cơ chế phân chia APK có sẵ trên Android 5.0 trở lên. Cơ chế này giống với các Apk thông thường bao gồm mã byte DEX được biên dịch, các resource của Android và tệp AndroidManifest.
+
+* Tuy vậy nền tảng Android có thể chia nhỏ nhiều apk để cài đặt như 1 ứng dụng. Nghĩa là bạn cso thể cài đặt nhiều APK phân chia có quyền truy cập vào mã và tài nguyên chung và xuất hiện dưới dạng 1 ứng dụng được cài đặt trên thiết bị.
+
+
+<img src="image/split_apk.png" height="260">
+
+### Dynamic Delivery with split APKs
+
+* **Base APK**: APK này chứa tất cả các mã và resource mà tất cả các split APK khác có thể truy cập và cung cấp chức năng cơ bản cho ứng dụng. Khi người dùng yêu cầu tải xuống ứng dụng của bạn, APK này sẽ được tải xuống và cài đặt trước. Điều đó bởi vì có tệp AndroidManifest của APK base khai báo đầy đủ các dịch vụ, ứng dụng cung cấp nội dung, quyền, yêu cầu về version và phụ thuộc vào các tính năng của hệ thống.
+
+
+* **Configuration APKs**: Mỗi APK này bao gồm các thư viện và tài nguyên riêng cho từng loại màn hình, kiến trúc CPU hoặc ngôn ngữ cụ thể. Khi người dùng tài xuống ứng dụng của bạn, họ sẽ chỉ tải APK nhắm mục tiêu vào thiết bị của họ. Mỗi APK cấu hình là một phụ thuộc của **Base APK** hoặc là **Dynamic feature APKs**, chúng được tải xuống và cài đặt cùng với APK mà chúng cung cấp source và tài nguyên cho. Không giống như base hoặc dynamic feature, bạn không tạo 1 module riêng cho configuration apk. Nếu bạn sử dụng tiêu chuẩn để sắp xếp các tài nguyên thay thế, dành riêng cho cấu hình các module dynamic feature hoặc là base apk, Google Play sẽ tự tạo Configuration APK.
+    <img src="image/configuration_apk.png" height="200">
+
+* **Dynamic feature APKs**: Mỗi APK này chưa mã và tài nguyên của 1 tính năng trong ứng dụng mà bạn module nó, thông qua dynamic, sau đó bạn có thể tùy chỉnh cách thức và thời điểm tải về trên thiết bị. Ví dụ 1 số ứng dụng phải truy cập vào module mới yêu cầu tải thêm dữ liệu của phần đó về.
+
+<img src="image/different_type_split_apk.png" height="350" width="500">
+
+> Đối với các device chạy Android 4.4 (API level 20) hoặc thấp hơn, Google Play tự động cung cấp 1 APK duy nhất mà tối ưu hóa cho cấu hình của thiết bị.
+
+### Dynamic Feature Modules
+
+* Dynamic feature module cho phép bạn tách các tính năng và tài nguyên nhất định ra khỏi module base và đưa chúng vào app bundle. Bạn có thể tùy chỉnh việc tải về các tài nguyên sau khi người dùng đã sử dụng app, làm giảm dung lượng tải cho Apk ban đầu.
+
+#### Creating a dynamic feature module
+
+* Để sử dụng tính năng này vào dự án sử dụng Android Studio (3.2 Canary 14+).
+> Lưu ý trước đó bạn phải tạo app bundle.
+
+1. Chọn **File > New > New Module** từ thanh menu. Trong hộp thoại hiện ra chọn **Dynamic Feature Module** rồi chọn **Next**.
+
+2. Tiếp đến là điền tên và title của module bạn muốn tạo.
+> Chọn **Enable on-demand** nếu bạn muốn module có sẵn để tải xuống theo yêu cầu. Check **Fusing** nếu như bạn muốn module này khả dụng cho những thiết bị từ Android 4.4 trở xuống và đưa nó vào nhiều APK.
+
+3. Finish và đợi cho projecy tự sign.
+
+#### Configuration file
+
+1. BuildGradle
+
+* Apply module vào file build.gradle
+
+```
+apply plugin: 'com.android.dynamic-feature'
+```
+
+* Những thứ không bao gồm như:
+
+    * Signing configurations: App bundle sử dụng signing configuration của base module.
+    * minifyEnabled property: Bạn có thể kích hoạt thu hẹp mã cho toàn bộ dự án khi cấu hình base module.
+    * versionCode and versionName: Gradle sử dụng thông tin này của base module cung cấp.
+    
+* Khi dynamic module của bạn được tạo, nó sẽ được thêm vào thuộc tính **android.dynamicFeatures** của base module.
+
+```
+dynamicFeatures = [":dynamic_feature"]
+```
+
+* Ngoài ra, base module dependency sẽ được thêm vào dynamic module.
+
+```
+implementation project(':app')
+```
+
+2. AndroidManifest.xml
+
+```
+<manifest xmlns:dist="http://schemas.android.com/apk/distribution"
+    package="com.example.dynamic_feature">
+
+    <dist:module
+        dist:instant="false"
+        dist:onDemand="true"
+        dist:title="@string/title_dynamic_feature">
+        <dist:fusing dist:include="true" />
+    </dist:module>
+</manifest>
+```
+
+* **<dist:module**: Phần tử XML mới này xác định cách module được đóng gói và phân phối dưới dạng apk.
+* **dist:onDemand="true|false"**: Chỉ định module có được tải xuống theo yêu cầu hay không.
+* **dist:title="@string/feature_name"**: Chỉ title hướng tới người dùng module.
+* **<dist:fusing include="true|false" />**: Chỉ định có bao gồm module trong nhiều apk nhắm tới các thiết bị chạy Android 4.4 trở xuống hay k.
+
+> Nếu dynamic feature module không tự tạo file DEX, nghĩa là nó không chứa mã được biên dịch thành định dạng tệp DEX,bạn phải đặt thuộc tính này là false nếu không sẽ gặp lỗi khi runtime.
+
+```
+<application
+  android:hasCode="true"
+  tools:replace="android:hasCode">
+  ...
+</application>
+```
+
+#### Downloading dynamic feature modules
+
+* Với thư viện Google Play Core, ứng dụng của bạn có thể tải xuống các dynamic feature module theo yêu cầu cho các thiết bị chạy Android 5.0 trở lên. Bạn cũng có thể sử dụng thư viện này để tải xuống các module hỗ trợ cho *8Android Instant Apps**.
+
