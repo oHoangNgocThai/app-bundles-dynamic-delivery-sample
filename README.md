@@ -147,5 +147,284 @@ implementation project(':app')
 
 #### Downloading dynamic feature modules
 
-* Với thư viện Google Play Core, ứng dụng của bạn có thể tải xuống các dynamic feature module theo yêu cầu cho các thiết bị chạy Android 5.0 trở lên. Bạn cũng có thể sử dụng thư viện này để tải xuống các module hỗ trợ cho *8Android Instant Apps**.
+* Với thư viện Google Play Core, ứng dụng của bạn có thể tải xuống các dynamic feature module theo yêu cầu cho các thiết bị chạy Android 5.0 trở lên. Bạn cũng có thể sử dụng thư viện này để tải xuống các module hỗ trợ cho **Android Instant Apps**.
+> Lưu ý: Downloading module theo yêu cầu đang là bản beta, nếu có vấn đề gì bạn nên report bug lại cho nhà phát triển.
 
+* Thêm thư viện Play Core vào bên trong build.gradle của app bạn.
+
+```
+dependencies {
+    implementation 'com.google.android.play:core:1.3.4'
+}
+```
+
+**Request an on demand dynamic feature module:**
+
+* Sử dụng **SplitInstallManager.startInstall()**: Ứng dụng của bạn cần ở trong foreground để gửi request. Khi ứng dụng của bạn request 1 module theo yêu cầu, thư viện Play Core sử dụng chiến lược **fire-and-forget** và quên đi theo kiểu không đồng bộ. Đó là nó sẽ gửi yêu cầu tải module xuống nền tảng nhưng nó không theo dõi xem việc cài đặt có thành công hay không, vì vậy bạn phải theo dõi trạng tháy yêu cầu.
+
+```
+fun requestModule(context: Context) {
+        val splitInstallManager = SplitInstallManagerFactory.create(context)
+        val request = SplitInstallRequest.newBuilder()
+            .addModule("dynamic_feature")
+            .build()
+
+        splitInstallManager.startInstall(request)
+            .addOnSuccessListener { sessionId ->
+            }
+            .addOnFailureListener { exception ->
+
+            }
+    }
+```
+> Để có quyền truy cập ngay vào module code hoặc tài nguyên, ứng dụng của bạn cần kích hoạt [SplitCompat](https://developer.android.com/guide/app-bundle/playcore#access_downloaded_modules)
+
+* Sử dụng **SplitInstallManager.deferredInstall()**: Nếu bạn muốn trì hoãn cài đặt khi ứng dụng ở chế độ background. Yêu cầu cài đặt hoãn lại là việc tốt nhất cần làm và bạn không thể theo dõi tiến trình của nó. Vì vậy, trước khi thử truy cập 1 module bạn đã chỉ định cho cài đặt hoãn lại, bạn nên kiểm tra xem module đã được cài đặt hay chưa.
+
+```
+splitInstallManager.deferredInstall(Arrays.asList("dynamicModule"))
+```
+
+**Monitor the Request State of an on demand module:**
+
+```
+fun requestWithCallback(context: Context) {
+        var mySessionId = 0
+
+        val splitInstallManager = SplitInstallManagerFactory.create(context)
+
+        val request = SplitInstallRequest
+            .newBuilder()
+            .addModule("dynamic-module")
+            .build()
+
+        val listener =
+            SplitInstallStateUpdatedListener { splitInstallSessionState ->
+                if (splitInstallSessionState.sessionId() == mySessionId) {
+                    when (splitInstallSessionState.status()) {
+                        SplitInstallSessionStatus.INSTALLED -> {
+                            Log.d(TAG, "Dynamic Module downloaded")
+                        }
+                    }
+                }
+            }
+
+        splitInstallManager.registerListener(listener)
+
+        splitInstallManager.startInstall(request)
+            .addOnFailureListener { e -> Log.d(TAG, "Exception: $e") }
+            .addOnSuccessListener { sessionId -> mySessionId = sessionId }
+    }
+```
+> Bạn có thể check xem các trạng thái trả về ở [đây](https://developer.android.com/guide/app-bundle/playcore)
+
+**Managing dynamic feature modules:**
+
+* Để hủy 1 request trước khi nó được cài đặt, bạn có thể sử dụng phương thức **cancelInstall()** và truyền vào sessionId.
+
+```
+splitInstallManager.cancelInstall(mySessionId)
+```
+
+* Để kiểm tra xem dynamic module đó đã được cài đặt hay chưa, sử dụng phương thức **getInstalledModules()**.
+
+```
+ val installedModule = SplitInstallManagerFactory.create(context).installedModules
+```
+
+* Để gỡ cài đặt 1 module, sử dụng phương thức **deferredUninstall(List<String> modules)**
+
+
+
+
+### Test with Bundle Tool
+
+* Bundletool là công cụ cơ bản mà Gradle, AndroidStudio và Google Play sử dụng để xây dựng gói Android App Bundle hoặc chuyển đổi các app bundle thành các APK khác nhau được triển khai cho các thiết bị.
+
+* Để tạo 1 APK cho tất cả cấu hình thiết bị mà ứng dụng của bạn hỗ trợ từ app bundle, hãy sử dụng lệnh bundletool **build-apks**.
+
+```
+$ bundletool build-apks --bundle=<path to .aab> --output=<out.apks>
+```
+
+* Chỉ có 2 đối số được yêu cầu là đường dẫn đến tệp .aab và thư mục nơi các apks tạo ra được lưu trữ. Sau đó chạy lệnh build-apks sẽ ra được như sau:
+
+```
+WARNING: The APKs won't be signed and thus not installable unless you also pass a keystore via the flag --ks.
+$ bundletool build-apks --bundle=/MyApp/my_app.aab --    output=/MyApp/my_app.apks
+--ks=/MyApp/keystore.jks
+--ks-pass=file:/MyApp/keystore.pwd
+--ks-key-alias=MyKeyAlias
+--key-pass=file:/MyApp/key.pwd
+```
+
+* Để triển khai ứng dụng của bạn tự file APK, sử dụng **install-apks** và chỉ định đường dẫn tới file apk.
+
+```
+bundletool install-apks --apks=/MyApp/my_app.apks
+```
+
+### Update your app using App Bundle.
+
+* Có 2 các update ứng dụng của bạn sử dụng App Bundle như sau: 
+
+    * Linh hoạt: Trải nghiệm người dùng cung cấp background download và cài đặt với giám sát các trạng thái. UX này phù hợp khi người dùng chấp nhận sử dụng ứng dụng trong khi tải xuống bản cập nhật. Ví dụ bạn muốn người dùng dùng thử 1 tính năng mới mà không quan trọng đến tính năng cốt lõi.
+    
+    <img src="image/flexible_flow.png" height="300">
+
+    * Ngay lập tức: Trải nghiệm người dùng cần phải cập nhật và khởi động lại ứng dụng để tiếp tục sử dụng. Sau khi người dùng chấp nhận cập nhật, Google sẽ xử lý việc cài đặt và khởi động lại.
+    
+    <img src="image/immediate_flow.png" height="300">
+
+#### Check for update availability
+
+```
+fun checkUpdateAvailable(context: Context) {
+        // Creates instance of the manager.
+        val appUpdateManager = AppUpdateManagerFactory.create(context)
+
+        // Returns an intent object that you use to check for an update.
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+
+        // Checks that the platform will allow the specified type of update.
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                // For a flexible update, use AppUpdateType.FLEXIBLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                // Request the update.
+            }
+        }
+    }
+```
+> Kết quả chứa trạng thái sẵn có cập nhật. Nếu có bản cập nhật và bản cập nhật được cho phép, AppUpdateInfo được trả lại cũng chứa ý định cập nhật.
+
+#### Start an update
+
+* Sử dụng phương thức **AppUpdateManager.startUpdateFlowForResult()** để yêu cầu cập nhật, như hiển thị bên dưới. Tuy nhiên bạn cần chú ý tần suất bạn yêu cần cập nhật để tránh gây phiền nhiễu hoặc mệt mỏi cho người dùng.
+
+```
+appUpdateManager.startUpdateFlowForResult(
+    // Pass the intent that is returned by 'getAppUpdateInfo()'.
+    appUpdateInfo,
+    // Or 'AppUpdateType.FLEXIBLE' for flexible updates.
+    AppUpdateType.IMMEDIATE,
+    // The current activity making the update request.
+    this,
+    // Include a request code to later monitor this update request.
+    MY_REQUEST_CODE)
+```
+
+* Lấy ra callback trạng thái update thì chúng ta sử dụng phương thức **onActivityResult()**.
+
+```
+override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    if (requestCode == MY_REQUEST_CODE) {
+        if (resultCode != RESULT_OK) {
+            log("Update flow failed! Result code: $resultCode")
+            // If the update is cancelled or fails,
+            // you can request to start the update again.
+        }
+    }
+}
+```
+> Có các trạng thái trả về khi cập nhật như **RESULT_OK**, **RESULT_CANCEL**, **ActivityResult.RESULT_IN_APP_UPDATE_FAILED**.
+
+#### Handle a flexible update
+
+* Handle trạng thái khi update sử dụng listener
+
+```
+// Create a listener to track request state updates.
+val listener = { state ->
+    // Show module progress, log state, or install the update.
+}
+
+// Before starting an update, register a listener for updates.
+appUpdateManager.registerListener(listener)
+
+// Start an update.
+
+// When status updates are no longer needed, unregister the listener.
+appUpdateManager.unregisterListener(listener)
+```
+
+* Khi trạng thái trả về **InstallStatus.DOWNLOADED**, bạn cần restart ứng dụng để cài đặt update. Không như việc cập nhật ngay lập tức, Google Play không kích hoạt khởi động lại ứng dụng cho bạn. Vì vậy nó khuyên rằng bạn nên sử dụng thông báo khi cài đặt xong.
+
+```
+override fun onStateUpdate(state: InstallState) {
+    if (state.installStatus() == InstallStatus.DOWNLOADED) {
+        // After the update is downloaded, show a notification
+        // and request user confirmation to restart the app.
+        popupSnackbarForCompleteUpdate()
+    }
+    ...
+}
+
+/* Displays the snackbar notification and call to action. */
+fun popupSnackbarForCompleteUpdate() {
+    Snackbar.make(
+        findViewById(R.id.activity_main_layout),
+        "An update has just been downloaded.",
+        Snackbar.LENGTH_INDEFINITE
+    ).apply {
+        setAction("RESTART") { appUpdateManager.completeUpdate() }
+        setActionTextColor(resources.getColor(R.color.snackbar_action_text_color))
+        show()
+    }
+}
+```
+
+* Khi bạn gọi phương thức **appUpdateManager.completeUpdate()** ở foreground, nền tảng sẽ hiển thị giao diện người dùng toàn màn hình để khởi động lại ứng dụng bên trong background. Sau khi nền tảng cài đặt bản cập nhật, ứng dụng sẽ được khởi động lại vào main activity.
+
+* Thay vào đó bạn gọi phương thức đó trong background, bản cập nhật được cài đặt âm thầm mà không ảnh hưởng đến giao diện người dùng. Nhưng khi người dùng đưa ứng dụng của bạn lên foreground, nó khuyên bạn xem là kiểm tra xem có đang chờ cài đặt không. Nếu trạng thái là DOWNLOADED thì hiển thị thông báo để người dùng tiến hành cài đặt.
+
+```
+// Checks that the update is not stalled during 'onResume()'.
+// However, you should execute this check at all app entry points.
+override fun onResume() {
+    super.onResume()
+
+    appUpdateManager
+        .appUpdateInfo
+        .addOnSuccessListener { appUpdateInfo ->
+            ...
+            // If the update is downloaded but not installed,
+            // notify the user to complete the update.
+            if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
+                popupSnackbarForCompleteUpdate()
+            }
+        }
+}
+```
+
+#### Handle an immediate update
+
+* Nếu bạn thực hiện cài đặt ngay lập tức, nếu trong quá trình cài đặt xảy ra sự cố, bản cập nhật vẫn sẽ được cài đặt dưới nền mà không cần sự chấp nhận của người dùng nữa.
+
+* Tuy nhiên ứng dụng của bạn trở lại foreground, ben nên xác nhận rằng bản cập nhật không bị đình trệ trong trạng thái **UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS**. Nếu đang trong trạng thái này thì hãy cập nhật tiếp tục như hình bên dưới.
+
+```
+// Checks that the update is not stalled during 'onResume()'.
+// However, you should execute this check at all entry points into the app.
+override fun onResume() {
+    super.onResume()
+
+    appUpdateManager
+        .appUpdateInfo
+        .addOnSuccessListener { appUpdateInfo ->
+            ...
+            if (appUpdateInfo.updateAvailability()
+                == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+            ) {
+                // If an in-app update is already running, resume the update.
+                manager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    IMMEDIATE,
+                    this,
+                    MY_REQUEST_CODE
+                );
+            }
+        }
+}
+```
